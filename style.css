@@ -164,3 +164,11 @@ button {
   width: 220px; /* or set to 'auto' or a fixed width as needed */
   display: block;
 }
+
+.hide {
+  display: none !important;
+}
+
+#attack-round {
+  color: lime;
+}

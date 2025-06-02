@@ -12,6 +12,10 @@ let npcs = [
   { name: "Dragon Whelp", initiative: 22, barPosition: 80, showCard: true },
 ];
 
+let initList = [];
+
+let initiative = 100;
+
 function getBarColor(percent) {
   let r, g, b;
   if (percent <= 50) {
@@ -218,6 +222,48 @@ window.onload = function () {
       (a, b) => b.initiative - a.initiative
     );
     console.log(composite);
+    initList = composite.map((item) => ({
+      name: item.name,
+      initiative: item.initiative,
+      barPosition: item.barPosition,
+      showCard: true,
+    }));
+    document.getElementById("begin-ar").classList.add("hide");
+    if (initList.length > 0) {
+      initiative = initList[0].initiative;
+    }
+
+    const attackRoundDiv = document.getElementById("attack-round");
+    attackRoundDiv.classList.remove("hide");
+    if (attackRoundDiv) {
+      attackRoundDiv.innerHTML = ""; // Clear previous content
+      // Find all objects with the current initiative value
+      const activeItems = initList.filter(
+        (item) => item.initiative === initiative
+      );
+
+      // Create the main container div
+      const activeDiv = document.createElement("div");
+      activeDiv.className = "active-ar";
+
+      // Create the title span and set its text to the matching names
+      const titleSpan = document.createElement("span");
+      titleSpan.className = "title-ar";
+      titleSpan.textContent = activeItems.map((item) => item.name).join(", ");
+
+      // Create the form div
+      const formDiv = document.createElement("div");
+      formDiv.className = "form";
+      formDiv.textContent = "THIS IS COMING SOON -- FORM DATA!";
+
+      // Append title and form to the main container
+      activeDiv.appendChild(titleSpan);
+      activeDiv.appendChild(formDiv);
+
+      // Append the main container to the attack round div
+      attackRoundDiv.appendChild(activeDiv);
+      //   attackRoundDiv.appendChild(h1);
+    }
   });
 
   document.getElementById("add-player")?.addEventListener("click", () =>
