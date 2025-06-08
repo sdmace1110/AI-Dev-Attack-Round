@@ -1,21 +1,107 @@
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 let players = [
-  { name: "Arin Stormblade", initiative: 15, barPosition: 70, showCard: true },
-  { name: "Bryn Ironfist", initiative: 20, barPosition: 50, showCard: true },
-  { name: "Dain Shadowalker", initiative: 10, barPosition: 30, showCard: true },
-  { name: "Eryn Brightwood", initiative: 25, barPosition: 90, showCard: true },
+  {
+    name: "Arin Stormblade",
+    initiative: 15,
+    maxHps: 23,
+    currentHps: 20,
+    barPosition: 0,
+    actions: [],
+    attackStats: [],
+    showCard: true,
+  },
+  {
+    name: "Bryn Ironfist",
+    initiative: 20,
+    maxHps: 35,
+    currentHps: 35, // will set below
+    barPosition: 0, // will set below
+    actions: [],
+    attackStats: [],
+    showCard: true,
+  },
+  {
+    name: "Dain Shadowalker",
+    initiative: 10,
+    maxHps: 22,
+    currentHps: 1, // will set below
+    barPosition: 0, // will set below
+    actions: [],
+    attackStats: [],
+    showCard: true,
+  },
+  {
+    name: "Eryn Brightwood",
+    initiative: 25,
+    maxHps: 42,
+    currentHps: 21, // will set below
+    barPosition: 0, // will set below
+    actions: [],
+    attackStats: [],
+    showCard: true,
+  },
 ];
 
 let npcs = [
-  { name: "Goblin Scout", initiative: 12, barPosition: 40, showCard: true },
-  { name: "Orc Brute", initiative: 18, barPosition: 60, showCard: true },
-  { name: "Troll Shaman", initiative: 8, barPosition: 20, showCard: true },
-  { name: "Dragon Whelp", initiative: 22, barPosition: 80, showCard: true },
+  {
+    name: "Goblin Scout",
+    initiative: 12,
+    maxHps: getRandomInt(10, 20),
+    currentHps: 0, // will set below
+    barPosition: 0, // will set below
+    actions: [],
+    attackStats: [],
+    showCard: true,
+  },
+  {
+    name: "Orc Brute",
+    initiative: 18,
+    maxHps: getRandomInt(18, 28),
+    currentHps: 0,
+    barPosition: 0,
+    actions: [],
+    attackStats: [],
+    showCard: true,
+  },
+  {
+    name: "Troll Shaman",
+    initiative: 8,
+    maxHps: getRandomInt(22, 35),
+    currentHps: 0,
+    barPosition: 0,
+    actions: [],
+    attackStats: [],
+    showCard: true,
+  },
+  {
+    name: "Dragon Whelp",
+    initiative: 22,
+    maxHps: getRandomInt(25, 40),
+    currentHps: 0,
+    barPosition: 0,
+    actions: [],
+    attackStats: [],
+    showCard: true,
+  },
 ];
+
+// Set barPosition for all
+function updateBarPositions(arr) {
+  arr.forEach((obj) => {
+    obj.barPosition = (obj.currentHps / obj.maxHps) * 100;
+  });
+}
+updateBarPositions(players);
+updateBarPositions(npcs);
 
 let initList = [];
 
 let initiative = 100;
 
+// Utility: Get bar color
 function getBarColor(percent) {
   let r, g, b;
   if (percent <= 50) {
@@ -89,6 +175,9 @@ function createModal({ type, array, render, color }) {
     height: "32px",
     fontSize: "1.2rem",
     cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   });
   closeBtn.onclick = () => modalOverlay.remove();
 
@@ -160,13 +249,9 @@ function renderCards({ array, sectionId, color }) {
     card.className = "card";
     card.style.position = "relative";
 
-    const nameDiv = document.createElement("div");
-    nameDiv.className = "card-name";
-    nameDiv.textContent = item.name;
-
+    // Remove button
     const removeBtn = document.createElement("button");
     removeBtn.textContent = "✕";
-    removeBtn.title = "Remove";
     Object.assign(removeBtn.style, {
       position: "absolute",
       top: "8px",
@@ -180,11 +265,19 @@ function renderCards({ array, sectionId, color }) {
       fontSize: "1rem",
       cursor: "pointer",
       padding: "0",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
     });
     removeBtn.onclick = () => {
       item.showCard = false;
       renderCards({ array, sectionId, color });
     };
+
+    // Card content
+    const nameDiv = document.createElement("div");
+    nameDiv.className = "card-name";
+    nameDiv.textContent = item.name;
 
     const cardRow = document.createElement("div");
     cardRow.className = "card-row";
@@ -205,6 +298,251 @@ function renderCards({ array, sectionId, color }) {
     card.append(removeBtn, nameDiv, cardRow);
     section.appendChild(card);
   });
+}
+
+// Attack round form rendering (extract to function)
+function renderAttackRound(initList, initiative) {
+  const attackRoundDiv = document.getElementById("attack-round");
+  attackRoundDiv.innerHTML = "";
+  attackRoundDiv.classList.remove("hide");
+
+  // Find all objects with the current initiative value and showCard = true
+  const activeItems = initList.filter(
+    (item) => item.initiative === initiative && item.showCard !== false
+  );
+
+  // Create the main container div
+  const activeDiv = document.createElement("div");
+  activeDiv.className = "active-ar";
+
+  // Create a close button for the attack round form
+  const closeAttackRoundBtn = document.createElement("button");
+  closeAttackRoundBtn.textContent = "✕";
+  Object.assign(closeAttackRoundBtn.style, {
+    position: "absolute",
+    top: "-26px",
+    right: "24px",
+    background: "#e57373",
+    color: "#fff",
+    border: "none",
+    borderRadius: "50%",
+    width: "32px",
+    height: "32px",
+    fontSize: "1.2rem",
+    cursor: "pointer",
+    zIndex: "10",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  });
+  closeAttackRoundBtn.onclick = () => {
+    attackRoundDiv.innerHTML = "";
+    attackRoundDiv.classList.add("hide");
+    document.getElementById("begin-ar").classList.remove("hide");
+  };
+
+  // For each active item (player or npc)
+  activeItems.forEach((item) => {
+    // Top row: Name, HP, Initiative
+    const topRow = document.createElement("div");
+    topRow.style.display = "flex";
+    topRow.style.alignItems = "center";
+    topRow.style.justifyContent = "space-between";
+    topRow.style.gap = "18px";
+    topRow.style.marginBottom = "8px";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = item.name;
+    nameSpan.style.fontWeight = "bold";
+    nameSpan.style.fontSize = "1.1rem";
+
+    const hpSpan = document.createElement("span");
+    // Find the original object to get currentHps and maxHps
+    let original =
+      players.find((p) => p.name === item.name) ||
+      npcs.find((n) => n.name === item.name);
+    hpSpan.textContent = `HP: ${original?.currentHps ?? "?"}/${
+      original?.maxHps ?? "?"
+    }`;
+    hpSpan.style.marginLeft = "12px";
+
+    const initSpan = document.createElement("span");
+    initSpan.textContent = `Initiative: ${item.initiative}`;
+    initSpan.style.marginLeft = "12px";
+
+    topRow.append(nameSpan, hpSpan, initSpan);
+
+    // Form container
+    const form = document.createElement("form");
+    form.style.display = "grid";
+    form.style.gridTemplateColumns = "1fr 1fr";
+    form.style.gap = "12px";
+    form.style.background = "#23272f";
+    form.style.padding = "16px";
+    form.style.borderRadius = "10px";
+    form.style.marginBottom = "24px";
+    form.style.boxShadow = "0 2px 8px #0004";
+
+    // D&D Actions dropdown
+    const actionLabel = document.createElement("label");
+    actionLabel.textContent = "Action:";
+    actionLabel.style.gridColumn = "1 / 2";
+    const actionSelect = document.createElement("select");
+    actionSelect.style.width = "100%";
+    [
+      "Attack",
+      "Cast Spell",
+      "Dodge",
+      "Help",
+      "Hide",
+      "Ready",
+      "Search",
+      "Use Object",
+    ].forEach((opt) => {
+      const o = document.createElement("option");
+      o.value = opt;
+      o.textContent = opt;
+      actionSelect.appendChild(o);
+    });
+
+    // Hits input
+    const hitsLabel = document.createElement("label");
+    hitsLabel.textContent = "Hits:";
+    const hitsInput = document.createElement("input");
+    hitsInput.type = "number";
+    hitsInput.min = 0;
+    hitsInput.value = 0;
+
+    // Misses input
+    const missesLabel = document.createElement("label");
+    missesLabel.textContent = "Misses:";
+    const missesInput = document.createElement("input");
+    missesInput.type = "number";
+    missesInput.min = 0;
+    missesInput.value = 0;
+
+    // Damage Done input
+    const dmgDoneLabel = document.createElement("label");
+    dmgDoneLabel.textContent = "Damage Done:";
+    const dmgDoneInput = document.createElement("input");
+    dmgDoneInput.type = "number";
+    dmgDoneInput.value = 0;
+
+    // Damage Taken input
+    const dmgTakenLabel = document.createElement("label");
+    dmgTakenLabel.textContent = "Damage Taken:";
+    const dmgTakenInput = document.createElement("input");
+    dmgTakenInput.type = "number";
+    dmgTakenInput.value = 0;
+
+    // Healing Done input
+    const healDoneLabel = document.createElement("label");
+    healDoneLabel.textContent = "Healing Done:";
+    const healDoneInput = document.createElement("input");
+    healDoneInput.type = "number";
+    healDoneInput.value = 0;
+
+    // Healing Taken input
+    const healTakenLabel = document.createElement("label");
+    healTakenLabel.textContent = "Healing Taken:";
+    const healTakenInput = document.createElement("input");
+    healTakenInput.type = "number";
+    healTakenInput.value = 0;
+
+    // Submit button
+    const submitBtn = document.createElement("button");
+    submitBtn.type = "submit";
+    submitBtn.textContent = "Submit";
+    submitBtn.style.gridColumn = "1 / 3";
+    submitBtn.style.background = "#2ee6b6";
+    submitBtn.style.color = "#181a20";
+    submitBtn.style.border = "none";
+    submitBtn.style.borderRadius = "8px";
+    submitBtn.style.padding = "10px 0";
+    submitBtn.style.fontWeight = "bold";
+    submitBtn.style.marginTop = "10px";
+    submitBtn.style.cursor = "pointer";
+
+    // Add all fields to the form
+    form.append(
+      actionLabel,
+      actionSelect,
+      hitsLabel,
+      hitsInput,
+      missesLabel,
+      missesInput,
+      dmgDoneLabel,
+      dmgDoneInput,
+      dmgTakenLabel,
+      dmgTakenInput,
+      healDoneLabel,
+      healDoneInput,
+      healTakenLabel,
+      healTakenInput,
+      submitBtn
+    );
+
+    // On submit, update the original object and go to next initiative
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const statObj = {
+        action: actionSelect.value,
+        hits: Number(hitsInput.value),
+        misses: Number(missesInput.value),
+        damageDone: Number(dmgDoneInput.value),
+        damageTaken: Number(dmgTakenInput.value),
+        healingDone: Number(healDoneInput.value),
+        healingTaken: Number(healTakenInput.value),
+        timestamp: new Date().toISOString(),
+      };
+      if (original) {
+        if (!original.attackStats) original.attackStats = [];
+        original.attackStats.push(statObj);
+        // Optionally update HP
+        if (!isNaN(statObj.damageTaken))
+          original.currentHps -= statObj.damageTaken;
+        if (!isNaN(statObj.healingTaken))
+          original.currentHps += statObj.healingTaken;
+        // Clamp HP
+        if (original.currentHps < 0) original.currentHps = 0;
+        if (original.currentHps > original.maxHps)
+          original.currentHps = original.maxHps;
+      }
+
+      // Find the next highest initiative (that still has showCard = true)
+      const remaining = initList
+        .filter((obj) => obj.showCard !== false && obj.initiative < initiative)
+        .map((obj) => obj.initiative);
+      const nextInitiative =
+        remaining.length > 0 ? Math.max(...remaining) : null;
+
+      if (nextInitiative !== null) {
+        // Continue to next initiative
+        renderAttackRound(initList, nextInitiative);
+      } else {
+        // End of round: close modal and show controls
+        attackRoundDiv.innerHTML = "";
+        attackRoundDiv.classList.add("hide");
+        document.getElementById("begin-ar").classList.remove("hide");
+      }
+      console.table(players, npcs);
+    };
+
+    // Container for this player's/npc's form
+    const playerFormContainer = document.createElement("div");
+    playerFormContainer.style.marginBottom = "32px";
+    playerFormContainer.style.background = "#24293a";
+    playerFormContainer.style.borderRadius = "12px";
+    playerFormContainer.style.padding = "18px 18px 10px 18px";
+    playerFormContainer.style.boxShadow = "0 2px 8px #0004";
+
+    playerFormContainer.append(topRow, form);
+    activeDiv.appendChild(playerFormContainer);
+  });
+
+  activeDiv.style.position = "relative";
+  activeDiv.appendChild(closeAttackRoundBtn);
+  attackRoundDiv.appendChild(activeDiv);
 }
 
 // Event listeners for buttons
@@ -232,38 +570,7 @@ window.onload = function () {
     if (initList.length > 0) {
       initiative = initList[0].initiative;
     }
-
-    const attackRoundDiv = document.getElementById("attack-round");
-    attackRoundDiv.classList.remove("hide");
-    if (attackRoundDiv) {
-      attackRoundDiv.innerHTML = ""; // Clear previous content
-      // Find all objects with the current initiative value
-      const activeItems = initList.filter(
-        (item) => item.initiative === initiative
-      );
-
-      // Create the main container div
-      const activeDiv = document.createElement("div");
-      activeDiv.className = "active-ar";
-
-      // Create the title span and set its text to the matching names
-      const titleSpan = document.createElement("span");
-      titleSpan.className = "title-ar";
-      titleSpan.textContent = activeItems.map((item) => item.name).join(", ");
-
-      // Create the form div
-      const formDiv = document.createElement("div");
-      formDiv.className = "form";
-      formDiv.textContent = "THIS IS COMING SOON -- FORM DATA!";
-
-      // Append title and form to the main container
-      activeDiv.appendChild(titleSpan);
-      activeDiv.appendChild(formDiv);
-
-      // Append the main container to the attack round div
-      attackRoundDiv.appendChild(activeDiv);
-      //   attackRoundDiv.appendChild(h1);
-    }
+    renderAttackRound(initList, initiative);
   });
 
   document.getElementById("add-player")?.addEventListener("click", () =>
